@@ -8,11 +8,13 @@ import GroupConfigPanel from '@/components/sidebar/GroupConfigPanel'
 import AISidebar from '@/components/sidebar/AISidebar'
 import TemplatePickerModal from '@/components/modals/TemplatePickerModal'
 import InfraDesigner from '@/components/infra/InfraDesigner'
+import SourceBrowserPanel from '@/components/infra/SourceBrowserPanel'
 import ContainerDesigner from '@/components/containers/ContainerDesigner'
 import NodeDashboard from '@/components/observability/NodeDashboard'
 import DashboardBoard from '@/components/observability/DashboardBoard'
 import LogAggregator from '@/components/observability/LogAggregator'
 import TerminalDrawer from '@/components/observability/TerminalDrawer'
+import IntegrationsPanel from '@/components/settings/IntegrationsPanel'
 import { usePipelineStore } from '@/store/pipelineStore'
 import { useInfraStore } from '@/store/infraStore'
 import { useDashboardStore } from '@/store/dashboardStore'
@@ -24,6 +26,8 @@ function Layout() {
   const selectedNodeId  = usePipelineStore((s) => s.selectedNodeId)
   const selectedGroupId = usePipelineStore((s) => s.selectedGroupId)
   const infraOpen        = useInfraStore((s) => s.isOpen)
+  const showBrowser      = useInfraStore((s) => s.showBrowser)
+  const closeBrowser     = useInfraStore((s) => s.closeBrowser)
   const containerOpen    = useContainerStore((s) => s.isOpen)
   const { activeView, nodeDashboardId } = useDashboardStore()
 
@@ -73,8 +77,16 @@ function Layout() {
         {nodeDashboardId && <NodeDashboard key={nodeDashboardId} />}
       </AnimatePresence>
 
+      {/* Source Browser — slides up above everything, accessible from any view */}
+      <AnimatePresence>
+        {showBrowser && <SourceBrowserPanel onClose={closeBrowser} />}
+      </AnimatePresence>
+
       {/* Terminal drawer — slides up from bottom */}
       <TerminalDrawer />
+
+      {/* Integrations panel — slides in from the right, z-801 */}
+      <IntegrationsPanel />
     </div>
   )
 }

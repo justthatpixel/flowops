@@ -23,9 +23,10 @@ import {
 } from 'react'
 import {
   Search, ChevronDown, ChevronRight,
-  GripVertical, PanelLeftClose, PanelLeftOpen, X, Plus,
+  GripVertical, PanelLeftClose, PanelLeftOpen, X, Plus, Globe,
 } from 'lucide-react'
 import { AWS_NODE_CONFIG }      from '@/lib/awsNodeConfig'
+import { useInfraStore }        from '@/store/infraStore'
 import type { AwsServiceType }  from '@/types/infra'
 
 // ─── Category definitions ─────────────────────────────────────────────────────
@@ -56,7 +57,7 @@ const CATEGORIES: Category[] = [
   },
   {
     id: 'security', label: 'Security', emoji: '🛡️',
-    services: ['iam_role', 'waf', 'shield', 'shield_advanced', 'security_group', 'secrets_manager', 'kms'],
+    services: ['iam_role', 'waf', 'shield', 'shield_advanced', 'secrets_manager', 'kms'],
   },
   {
     id: 'messaging', label: 'Messaging', emoji: '📨',
@@ -368,6 +369,7 @@ export default function InfraSidebar() {
   const [query,     setQuery]     = useState('')
   const [collapsed, setCollapsed] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
+  const { openBrowser } = useInfraStore()
 
   // CMD+K / CTRL+K shortcut to focus search
   useEffect(() => {
@@ -518,7 +520,7 @@ export default function InfraSidebar() {
       )}
 
       {/* ── Scrollable content ──────────────────────────────────────────────── */}
-      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minHeight: 0 }}>
 
         {/* ── Search results ────────────────────────────────────────────── */}
         {showSearch && !collapsed && (
@@ -597,6 +599,73 @@ export default function InfraSidebar() {
               </div>
             )}
           </div>
+        )}
+      </div>
+
+      {/* ── Browser button (pinned to bottom) ──────────────────────────────── */}
+      <div style={{
+        padding:    collapsed ? '8px 6px' : '8px 10px',
+        borderTop:  '1px solid #E5E7EB',
+        flexShrink: 0,
+      }}>
+        {collapsed ? (
+          <button
+            onClick={() => openBrowser()}
+            title="Open Source Browser"
+            style={{
+              width: 40, height: 40, margin: '0 auto', borderRadius: 8,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'none', border: '1px solid #E5E7EB', cursor: 'pointer',
+              color: '#9CA3AF', transition: 'background 0.1s, color 0.1s, border-color 0.1s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background  = 'linear-gradient(135deg, #EFF6FF, #EEF2FF)'
+              e.currentTarget.style.color       = '#6366F1'
+              e.currentTarget.style.borderColor = '#C7D2FE'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background  = 'none'
+              e.currentTarget.style.color       = '#9CA3AF'
+              e.currentTarget.style.borderColor = '#E5E7EB'
+            }}
+          >
+            <Globe size={16} strokeWidth={2} />
+          </button>
+        ) : (
+          <button
+            onClick={() => openBrowser()}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+              padding: '8px 12px', borderRadius: 8,
+              background: 'linear-gradient(135deg, #EFF6FF, #EEF2FF)',
+              border: '1px solid #C7D2FE',
+              cursor: 'pointer', transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background  = 'linear-gradient(135deg, #DBEAFE, #E0E7FF)'
+              e.currentTarget.style.borderColor = '#6366F1'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background  = 'linear-gradient(135deg, #EFF6FF, #EEF2FF)'
+              e.currentTarget.style.borderColor = '#C7D2FE'
+            }}
+          >
+            <div style={{
+              width: 26, height: 26, borderRadius: 6, flexShrink: 0,
+              background: 'linear-gradient(135deg, #0EA5E9, #6366F1)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Globe size={14} color="#fff" strokeWidth={2} />
+            </div>
+            <div style={{ flex: 1, textAlign: 'left' }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#1E40AF', fontFamily: '"DM Sans", sans-serif' }}>
+                Source Browser
+              </div>
+              <div style={{ fontSize: 10, color: '#6B7280', fontFamily: '"DM Sans", sans-serif' }}>
+                Prometheus · Grafana · Jenkins…
+              </div>
+            </div>
+          </button>
         )}
       </div>
     </div>

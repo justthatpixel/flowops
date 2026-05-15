@@ -58,8 +58,6 @@ export default function CoreWebVitals({ id }: { id: string }) {
       title="Core Web Vitals"
       icon={Gauge}
       iconColor="#06B6D4"
-      width={340}
-      height={260}
       headerRight={
         <span
           style={{

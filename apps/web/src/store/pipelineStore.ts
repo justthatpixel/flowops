@@ -44,12 +44,16 @@ interface PipelineStore {
   setGroupMember: (groupId: string, nodeId: string, isMember: boolean) => void
   /** Change a group's colour tint */
   setGroupColor: (groupId: string, color: GroupColor) => void
-  /** Create a new empty group */
-  addGroup: (id: string, label: string, color: GroupColor) => void
+  /** Create a new empty group at a given canvas position */
+  addGroup: (id: string, label: string, color: GroupColor, position?: { x: number; y: number }) => void
   /** Permanently remove a group and its config */
   removeGroup: (groupId: string) => void
   /** Rename a group label */
   updateGroupLabel: (groupId: string, label: string) => void
+  /** Update stored position after drag */
+  updateGroupPosition: (groupId: string, x: number, y: number) => void
+  /** Update stored size after resize */
+  updateGroupSize: (groupId: string, width: number, height: number) => void
   startRun: () => void
 }
 
@@ -155,11 +159,11 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
       }
     }),
 
-  addGroup: (id, label, color) =>
+  addGroup: (id, label, color, position = { x: 100, y: 100 }) =>
     set((state) => ({
       groupConfigs: {
         ...state.groupConfigs,
-        [id]: { label, color, memberIds: [] },
+        [id]: { label, color, memberIds: [], position, size: { width: 320, height: 200 } },
       },
     })),
 
@@ -180,6 +184,30 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
         groupConfigs: {
           ...state.groupConfigs,
           [groupId]: { ...cfg, label },
+        },
+      }
+    }),
+
+  updateGroupPosition: (groupId, x, y) =>
+    set((state) => {
+      const cfg = state.groupConfigs[groupId]
+      if (!cfg) return {}
+      return {
+        groupConfigs: {
+          ...state.groupConfigs,
+          [groupId]: { ...cfg, position: { x, y } },
+        },
+      }
+    }),
+
+  updateGroupSize: (groupId, width, height) =>
+    set((state) => {
+      const cfg = state.groupConfigs[groupId]
+      if (!cfg) return {}
+      return {
+        groupConfigs: {
+          ...state.groupConfigs,
+          [groupId]: { ...cfg, size: { width, height } },
         },
       }
     }),

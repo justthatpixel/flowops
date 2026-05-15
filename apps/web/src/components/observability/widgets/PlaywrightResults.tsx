@@ -20,8 +20,6 @@ export default function PlaywrightResults({ id }: { id: string }) {
       title="Playwright"
       icon={TestTube2}
       iconColor="#22C55E"
-      width={320}
-      height={240}
       headerRight={
         <span
           style={{

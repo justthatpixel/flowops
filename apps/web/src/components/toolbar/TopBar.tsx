@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
-import { Play, Loader2, RotateCcw, Zap, LayoutTemplate, AlertTriangle, TerminalSquare } from 'lucide-react'
+import { Play, Loader2, RotateCcw, Zap, LayoutTemplate, AlertTriangle, TerminalSquare, Settings2 } from 'lucide-react'
 import { usePipelineStore } from '@/store/pipelineStore'
 import { useDashboardStore, type AppView } from '@/store/dashboardStore'
 import { useTerminalStore } from '@/store/terminalStore'
+import { useSettingsStore } from '@/store/settingsStore'
 
 const VIEW_TABS: { id: AppView; label: string }[] = [
   { id: 'pipeline',  label: 'Pipeline'  },
@@ -14,6 +15,7 @@ export default function TopBar() {
   const { pipelineName, setPipelineName, runState, startRun, setShowTemplatePicker } = usePipelineStore()
   const { activeView, setView } = useDashboardStore()
   const { toggleOpen: toggleTerminal } = useTerminalStore()
+  const { setIntegrationsPanelOpen } = useSettingsStore()
   const [editing, setEditing] = useState(false)
   const [draftName, setDraftName] = useState(pipelineName)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -166,6 +168,29 @@ export default function TopBar() {
 
       {/* Run button + terminal */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 220, justifyContent: 'flex-end' }}>
+        {/* Integrations / Settings button */}
+        <button
+          onClick={() => setIntegrationsPanelOpen(true)}
+          title="Integrations & API tokens"
+          style={{
+            width: 32, height: 32, borderRadius: 6,
+            background: 'none', border: '1px solid #E5E7EB',
+            cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'background 0.15s, border-color 0.15s', flexShrink: 0,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#F3F4F6'
+            e.currentTarget.style.borderColor = '#9CA3AF'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'none'
+            e.currentTarget.style.borderColor = '#E5E7EB'
+          }}
+        >
+          <Settings2 size={15} color="#6B7280" strokeWidth={1.8} />
+        </button>
+
         {/* Terminal button */}
         <button
           onClick={toggleTerminal}

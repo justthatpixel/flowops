@@ -1,47 +1,193 @@
-# FlowOps
+<div align="center">
 
-A visual CI/CD pipeline and infrastructure designer. Build pipelines by dragging and connecting nodes on a canvas, then visualise the resulting AWS infrastructure — all with OPA-backed policy guardrails.
+<img src="./docs/banner.png" alt="FlowOps" width="100%" />
+
+<br />
+<br />
+
+<p>
+  <strong>Visual CI/CD pipeline builder · AWS infrastructure designer · AI-powered · Terraform-ready</strong>
+</p>
+
+<p>
+  <a href="#features">Features</a> ·
+  <a href="#getting-started">Getting Started</a> ·
+  <a href="#tech-stack">Tech Stack</a> ·
+  <a href="#project-structure">Structure</a>
+</p>
+
+<p>
+  <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black" />
+  <img src="https://img.shields.io/badge/TypeScript-5.5-3178C6?style=flat-square&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Vite-5-646CFF?style=flat-square&logo=vite&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" />
+  <img src="https://img.shields.io/badge/Claude_AI-Anthropic-D97757?style=flat-square&logo=anthropic&logoColor=white" />
+  <img src="https://img.shields.io/badge/Terraform-IaC-7B42BC?style=flat-square&logo=terraform&logoColor=white" />
+</p>
+
+</div>
+
+---
+
+## What is FlowOps?
+
+FlowOps is an all-in-one DevOps platform that lets you **design CI/CD pipelines and AWS infrastructure visually**, generate Terraform from your architecture, enforce policy guardrails, and monitor your stack — all in one place.
+
+Describe your app to the AI and it configures the entire pipeline for you. Switch to Architect Mode to lay out your AWS infrastructure, see live cost estimates, and generate production-ready Terraform. No more context switching between a dozen tools.
+
+---
 
 ## Features
 
-- **Pipeline Canvas** — drag-and-drop CI/CD pipeline builder using React Flow; supports group boxes, animated edges, and custom node types (Build, Test, Deploy, Docker, Trigger)
-- **Infra Canvas** — AWS infrastructure visualiser with VPC boundaries, subnet boxes, and service nodes
-- **Dream Mode** — natural-language infrastructure generation
-- **Guardrail Panel** — 6 OPA Rego policies enforced via a `PolicyManager` (node limits, connection rules, naming conventions)
-- **Template Picker** — pre-built pipeline templates to get started quickly
+### 🤖 AI Pipeline Configurator
+Describe your stack in plain English — Claude configures a complete, production-grade CI/CD pipeline for you instantly. Every node is fully customisable after generation.
 
-## Tech Stack
+<img src="./docs/gifs/ai-pipeline-configurator.gif" alt="AI Pipeline Configurator" width="100%" />
 
-- React 18 + TypeScript
-- React Flow (`@xyflow/react`) for the canvas
-- Framer Motion for animations
-- Zustand for state management
-- OPA (Open Policy Agent) Rego policies
-- pnpm workspaces monorepo
+---
+
+### 🔀 Visual Pipeline Builder
+Drag-and-drop CI/CD pipeline canvas with animated edges, group boxes, and a full library of node types: Trigger, Build, Test, Docker, Deploy, Security Audit, Observability, and more.
+
+<img src="./docs/gifs/pipeline-builder.gif" alt="Pipeline Builder" width="100%" />
+
+---
+
+### 🏗️ Infrastructure Designer
+Design your AWS architecture on a visual canvas. Supports 30+ AWS services across Compute, Networking, Database, Storage, Security, and Messaging. Drag from the sidebar, connect services, and configure each resource inline.
+
+<img src="./docs/gifs/infra-designer.gif" alt="Infrastructure Designer" width="100%" />
+
+---
+
+### 💰 Live Cost Estimation & Scale Tiers
+See estimated monthly cost update in real time as you add resources. Switch between scale tiers (10 / 1k / 10k / 100k / 1M users) to understand how your costs change with growth.
+
+<img src="./docs/gifs/cost-estimation.gif" alt="Cost Estimation & Scale Tiers" width="100%" />
+
+---
+
+### 📋 Terraform Generation & Plan View
+Generate production-ready Terraform from your architecture with one click. Switch to Plan View to see a visual diff of what will be **created**, **updated**, **replaced**, or **destroyed** — colour-coded directly on the canvas.
+
+<img src="./docs/gifs/terraform-plan.gif" alt="Terraform Generation & Plan View" width="100%" />
+
+---
+
+### 📊 Observability Dashboard
+Build a custom monitoring dashboard by dragging widgets into a grid layout. Includes Commit Feed, CI Status, Core Web Vitals, Log Error Rate, Trivy Scan, Grafana Chart, Prometheus Metrics, Deployment Health, Docker Builds, and Terraform Plan diffs.
+
+<img src="./docs/gifs/dashboard.gif" alt="Observability Dashboard" width="100%" />
+
+---
+
+### 🌐 Source Browser
+Open GitHub, GitLab, Grafana, Prometheus, Datadog, ArgoCD, Jenkins, or any custom URL in a full-screen in-app browser panel — no tab switching required. Each pipeline node links directly to its relevant source.
+
+<img src="./docs/gifs/source-browser.gif" alt="Source Browser" width="100%" />
+
+---
+
+### 🛡️ Policy Guardrails
+Enforce OPA (Open Policy Agent) Rego policies across your pipeline and infrastructure. Guardrails check cost caps, naming conventions, connection rules, and SCP compliance — with a live audit log.
+
+<img src="./docs/gifs/guardrails.gif" alt="Policy Guardrails" width="100%" />
+
+---
 
 ## Getting Started
 
+### Prerequisites
+
+- Node.js 20+
+- pnpm 9+
+
+### Installation
+
 ```bash
+# Clone the repo
+git clone https://github.com/your-org/flowops.git
+cd flowops
+
+# Install dependencies
 pnpm install
+
+# Start the dev server
 pnpm dev
 ```
 
-The app runs at `http://localhost:5173` by default.
+The web app runs at `http://localhost:5173` and the API at `http://localhost:3001`.
+
+### Docker
+
+```bash
+docker-compose up -d
+```
+
+---
 
 ## Project Structure
 
 ```
-apps/
-  web/
-    src/
-      components/
-        canvas/        # Pipeline canvas nodes and edges
-        infra/         # AWS infrastructure nodes and panels
-        sidebar/       # Node and group config panels
-        toolbar/       # TopBar and NodePalette
-        modals/        # Template picker
-      store/           # Zustand stores (pipeline, infra, guardrail)
-      lib/             # Node config, AWS node config, helpers
-      types/           # TypeScript types
-policies/              # OPA Rego policy files
+flowops/
+├── apps/
+│   ├── web/                    # React frontend
+│   │   └── src/
+│   │       ├── components/
+│   │       │   ├── canvas/     # Pipeline canvas (nodes, edges)
+│   │       │   ├── infra/      # AWS infrastructure designer
+│   │       │   ├── containers/ # Container designer
+│   │       │   ├── observability/ # Dashboard, logs, terminal
+│   │       │   ├── sidebar/    # Node & group config panels
+│   │       │   ├── toolbar/    # TopBar, NodePalette
+│   │       │   └── modals/     # Template picker
+│   │       ├── store/          # Zustand stores (pipeline, infra, dashboard)
+│   │       ├── lib/            # Node config, generators, helpers
+│   │       ├── hooks/          # useAI, useExecution
+│   │       └── types/          # TypeScript types
+│   └── api/                    # Express backend
+│       └── src/
+│           └── index.ts        # API + WebSocket server
+└── policies/                   # OPA Rego policy files
 ```
+
+---
+
+## Tech Stack
+
+### Frontend
+
+| | Technology | Purpose |
+|---|---|---|
+| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="20" /> | **React 18** | UI framework |
+| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" width="20" /> | **TypeScript 5** | Type safety |
+| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vitejs/vitejs-original.svg" width="20" /> | **Vite** | Build tool & dev server |
+| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-original.svg" width="20" /> | **Tailwind CSS** | Styling |
+| 🔀 | **React Flow** (`@xyflow/react`) | Pipeline & infra canvas |
+| 🎞 | **Framer Motion** | Animations & transitions |
+| 🐻 | **Zustand** | State management |
+| ✨ | **Lucide React** | Icons |
+
+### Backend
+
+| | Technology | Purpose |
+|---|---|---|
+| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg" width="20" /> | **Express** | REST API |
+| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/prisma/prisma-original.svg" width="20" /> | **Prisma** | Database ORM |
+| 🔌 | **WebSockets** (`ws`) | Real-time pipeline execution |
+
+### Platform & AI
+
+| | Technology | Purpose |
+|---|---|---|
+| 🤖 | **Claude (Anthropic)** | AI pipeline generation & node config |
+| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/terraform/terraform-original.svg" width="20" /> | **Terraform** | Infrastructure as Code generation |
+| ⚖️ | **OPA / Rego** | Policy-as-code guardrails |
+| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" width="20" /> | **Docker** | Containerised deployment |
+| 📦 | **pnpm workspaces** | Monorepo management |
+
+---
+
+## License
+
+MIT © FlowOps

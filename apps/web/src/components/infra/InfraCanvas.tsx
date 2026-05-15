@@ -51,6 +51,43 @@ import BaseAwsNode, { type AwsNodeData } from './aws-nodes/BaseAwsNode'
 import VpcBoundaryNode from './aws-nodes/VpcBoundaryNode'
 import SubnetBoxNode from './aws-nodes/SubnetBoxNode'
 import type { InfraComponent, InfraEdge, InfraContainer, AwsServiceType } from '@/types/infra'
+import { DEMO_PLAN } from '@/data/demoPlan'
+
+// ─── TF resource type → AWS service type ──────────────────────────────────────
+
+const TF_TO_AWS: Record<string, AwsServiceType> = {
+  aws_instance:                    'ec2_asg',
+  aws_db_instance:                 'rds',
+  aws_db_instance_mysql:           'rds_mysql',
+  aws_s3_bucket:                   's3',
+  aws_cloudwatch_log_group:        'cloudwatch_dashboard',
+  aws_cloudwatch_metric_alarm:     'cloudwatch_alarm',
+  aws_elb:                         'alb',
+  aws_lb:                          'alb',
+  aws_alb:                         'alb',
+  aws_route53_record:              'route53',
+  aws_lambda_function:             'lambda',
+  aws_ecs_service:                 'ecs',
+  aws_ecs_task_definition:         'ecs_task',
+  aws_ecr_repository:              'ecr',
+  aws_sqs_queue:                   'sqs',
+  aws_sns_topic:                   'sns',
+  aws_cloudfront_distribution:     'cloudfront',
+  aws_api_gateway_rest_api:        'api_gateway',
+  aws_dynamodb_table:              'dynamodb',
+  aws_elasticache_cluster:         'elasticache',
+  aws_nat_gateway:                 'nat_gateway',
+  aws_vpc:                         'vpc',
+  aws_kinesis_stream:              'kinesis',
+  aws_efs_file_system:             'efs',
+  aws_xray_group:                  'xray',
+  aws_secretsmanager_secret:       'secrets_manager',
+  aws_kms_key:                     'kms',
+  aws_iam_role:                    'iam_role',
+  aws_wafv2_web_acl:               'waf',
+  aws_shield_advanced_protection:  'shield_advanced',
+  aws_elastic_beanstalk_environment: 'elastic_beanstalk',
+}
 
 const NODE_TYPES = {
   awsNode:     BaseAwsNode,
@@ -215,6 +252,7 @@ function InfraCanvasInner() {
     addComponent, removeComponent,
     addEdge: storeAddEdge, removeEdge: storeRemoveEdge,
     updateComponentPosition,
+    planMode,
   } = useInfraStore()
 
   const { screenToFlowPosition } = useReactFlow()
@@ -227,9 +265,70 @@ function InfraCanvasInner() {
   // changes never cause a full canvas node re-render (which flashed black).
   const rfNodes = useMemo(() => {
     const containerNodes = toRFContainers(containers ?? [])
-    const awsNodes = toRFNodes(components)
+    let awsNodes = toRFNodes(components)
+
+    if (planMode) {
+      // Track which component ids we've already matched
+      const matchedIds = new Set<string>()
+      const patches    = new Map<string, Partial<AwsNodeData>>()
+      const ghostNodes: Node<AwsNodeData>[] = []
+
+      // Compute a bounding box to place ghost nodes below existing canvas
+      const maxY = components.length > 0
+        ? Math.max(...components.map((c) => c.position.y)) + 160
+        : 400
+
+      let ghostX = 80
+
+      for (const resource of DEMO_PLAN) {
+        const awsType = TF_TO_AWS[resource.tfType]
+        if (!awsType) continue
+
+        if (resource.planAction === 'create') {
+          // Place a ghost node below the canvas
+          ghostNodes.push({
+            id:       resource.id,
+            type:     'awsNode',
+            position: { x: ghostX, y: maxY },
+            data: {
+              type:        awsType,
+              label:       resource.tfAddress.split('.')[1] ?? resource.tfAddress,
+              config:      {},
+              planAction:  'create',
+              planDiff:    resource.diff,
+              planAddress: resource.tfAddress,
+              isGhost:     true,
+            },
+            draggable: false,
+            zIndex:    1,
+          })
+          ghostX += 220
+        } else {
+          // Match first unmatched existing component of this AWS type
+          const match = components.find((c) => c.type === awsType && !matchedIds.has(c.id))
+          if (match) {
+            matchedIds.add(match.id)
+            patches.set(match.id, {
+              planAction:  resource.planAction,
+              planDiff:    resource.diff,
+              planAddress: resource.tfAddress,
+            })
+          }
+        }
+      }
+
+      // Apply patches to existing nodes
+      awsNodes = awsNodes.map((node) => {
+        const patch = patches.get(node.id)
+        if (!patch) return node
+        return { ...node, data: { ...node.data, ...patch } }
+      })
+
+      return [...containerNodes, ...awsNodes, ...ghostNodes]
+    }
+
     return [...containerNodes, ...awsNodes]
-  }, [components, containers])
+  }, [components, containers, planMode])
 
   const rfEdges = useMemo(() => toRFEdges(edges), [edges])
 

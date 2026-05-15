@@ -38,6 +38,7 @@ import GrafanaEmbed      from './widgets/GrafanaEmbed'
 import PrometheusStat    from './widgets/PrometheusStat'
 import DeploymentHealth  from './widgets/DeploymentHealth'
 import DockerBuildStatus from './widgets/DockerBuildStatus'
+import TerraformPlan    from './widgets/TerraformPlan'
 
 // ─── Grid constants ───────────────────────────────────────────────────────────
 
@@ -86,6 +87,7 @@ function renderWidget(w: WidgetInstance) {
     case 'prometheus_stat':     return <PrometheusStat     id={w.id} />
     case 'deployment_health':   return <DeploymentHealth   id={w.id} />
     case 'docker_build_status': return <DockerBuildStatus  id={w.id} />
+    case 'terraform_plan':      return <TerraformPlan      id={w.id} />
     default: return null
   }
 }

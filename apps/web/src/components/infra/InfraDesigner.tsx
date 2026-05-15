@@ -43,7 +43,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Zap, Terminal, Sparkles, Settings2, Shield, TrendingDown, AlertOctagon, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Zap, Terminal, Sparkles, Settings2, Shield, TrendingDown, AlertOctagon, CheckCircle, GitCompareArrows } from 'lucide-react'
 import { useInfraStore, SCALE_TIERS } from '@/store/infraStore'
 import { usePipelineStore } from '@/store/pipelineStore'
 import { useGuardrailStore } from '@/store/guardrailStore'
@@ -69,9 +69,10 @@ import GuardrailPanel from './guardrails/GuardrailPanel'
 import ScpImporter from './guardrails/ScpImporter'
 import InfracostPanel from './InfracostPanel'
 import AuditLog from './audit/AuditLog'
+import PlanApplyBar from './PlanApplyBar'
 
 export default function InfraDesigner() {
-  const { isOpen, closeDesigner, deployNodeId, templateId, scaleTier, selectedComponentId, components, setTerraform, liveStats } = useInfraStore()
+  const { isOpen, closeDesigner, deployNodeId, templateId, scaleTier, selectedComponentId, components, setTerraform, liveStats, planMode, setPlanMode } = useInfraStore()
   const { nodes } = usePipelineStore()
   const mode              = useGuardrailStore((s) => s.mode)
   const budgetConfig      = useGuardrailStore((s) => s.budgetConfig)
@@ -558,6 +559,47 @@ export default function InfraDesigner() {
           Ask AI
         </button>
 
+        {/* Plan View button — Architect Mode only */}
+        {mode === 'architect' && (
+          <button
+            onClick={() => setPlanMode(!planMode)}
+            style={{
+              display:      'flex',
+              alignItems:   'center',
+              gap:          6,
+              background:   planMode
+                ? 'linear-gradient(135deg, #059669, #047857)'
+                : 'transparent',
+              border:       planMode ? 'none' : '1px solid #D1FAE5',
+              borderRadius: 6,
+              padding:      '6px 12px',
+              fontSize:     12,
+              fontWeight:   600,
+              color:        planMode ? '#FFFFFF' : '#059669',
+              cursor:       'pointer',
+              fontFamily:   '"DM Sans", sans-serif',
+              boxShadow:    planMode ? '0 1px 4px rgba(5,150,105,0.4)' : 'none',
+              transition:   'all 0.15s',
+              flexShrink:   0,
+            }}
+            onMouseEnter={(e) => {
+              if (!planMode) {
+                e.currentTarget.style.background = '#ECFDF5'
+                e.currentTarget.style.borderColor = '#6EE7B7'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!planMode) {
+                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.borderColor = '#D1FAE5'
+              }
+            }}
+          >
+            <GitCompareArrows size={13} strokeWidth={2} />
+            {planMode ? 'Exit Plan View' : 'Plan View'}
+          </button>
+        )}
+
         {/* Generate Terraform button — Architect Mode only */}
         {mode === 'architect' && (
           <button
@@ -685,6 +727,13 @@ export default function InfraDesigner() {
                 <InfracostPanel onClose={() => setShowCosts(false)} />
               )}
             </AnimatePresence>
+
+            {/* Plan Apply Bar — floating bottom bar when plan mode is active */}
+            <AnimatePresence>
+              {planMode && (
+                <PlanApplyBar onExit={() => setPlanMode(false)} />
+              )}
+            </AnimatePresence>
             </div>{/* end canvas area */}
           </div>{/* end sidebar + canvas row */}
 
@@ -697,6 +746,7 @@ export default function InfraDesigner() {
               <TerraformPanel onClose={() => setShowTerraform(false)} />
             )}
           </AnimatePresence>
+
         </>
       )}
 

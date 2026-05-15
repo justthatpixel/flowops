@@ -49,11 +49,25 @@ export interface AwsNodeData extends Record<string, unknown> {
   type:   AwsServiceType
   label:  string
   config: Record<string, unknown>
+  /** Plan mode overlay — set by InfraCanvas when planMode is active */
+  planAction?:  'create' | 'update' | 'delete' | 'replace' | 'no-change'
+  planDiff?:    Record<string, { before: unknown; after: unknown }>
+  planAddress?: string
+  isGhost?:     boolean
 }
+
+// ─── Plan action visual config ────────────────────────────────────────────────
+
+const PLAN_CFG = {
+  create:  { symbol: '+',  label: 'CREATE',  color: '#22C55E', bg: '#F0FDF4', ring: 'rgba(34,197,94,0.45)' },
+  update:  { symbol: '~',  label: 'UPDATE',  color: '#F59E0B', bg: '#FFFBEB', ring: 'rgba(245,158,11,0.45)' },
+  delete:  { symbol: '−',  label: 'DESTROY', color: '#EF4444', bg: '#FFF5F5', ring: 'rgba(239,68,68,0.45)' },
+  replace: { symbol: '↻',  label: 'REPLACE', color: '#F97316', bg: '#FFF7ED', ring: 'rgba(249,115,22,0.45)' },
+} as const
 
 type AwsNode = Node<AwsNodeData>
 
-// ─── Inject CSS keyframe for drop pulse (once) ───────────────────────────────
+// ─── Inject CSS keyframes (once) ─────────────────────────────────────────────
 
 const PULSE_STYLE_ID = 'flowops-drop-pulse'
 function injectPulseStyles() {
@@ -66,6 +80,16 @@ function injectPulseStyles() {
       0%   { box-shadow: 0 0 0 0px rgba(59,130,246,0.7); }
       50%  { box-shadow: 0 0 0 10px rgba(59,130,246,0.15); }
       100% { box-shadow: 0 0 0 0px rgba(59,130,246,0); }
+    }
+    @keyframes ghostFloat {
+      0%   { opacity: 0.55; transform: translateY(0px); }
+      50%  { opacity: 0.8;  transform: translateY(-2px); }
+      100% { opacity: 0.55; transform: translateY(0px); }
+    }
+    @keyframes planRingPulse {
+      0%   { box-shadow: var(--plan-ring-start); }
+      50%  { box-shadow: var(--plan-ring-peak); }
+      100% { box-shadow: var(--plan-ring-start); }
     }
   `
   document.head.appendChild(el)
@@ -161,13 +185,18 @@ const PRICING_HINT: Partial<Record<AwsServiceType, string>> = {
 
 export default function BaseAwsNode({ id, data: rawData }: NodeProps<AwsNode>) {
   const data = rawData as unknown as AwsNodeData
-  const { selectComponent, selectedComponentId, newlyDroppedId, clearNewlyDropped } = useInfraStore()
+  const { selectComponent, selectedComponentId, newlyDroppedId, clearNewlyDropped, planMode } = useInfraStore()
 
   const selected    = selectedComponentId === (id as string)
   const isNewDrop   = newlyDroppedId      === (id as string)
   const cfg         = AWS_NODE_CONFIG[data.type as AwsServiceType]
   const [hovered, setHovered] = useState(false)
   const pulsedRef   = useRef(false)
+
+  // Plan mode
+  const planAction = data.planAction && data.planAction !== 'no-change' ? data.planAction : null
+  const planCfg    = planAction ? PLAN_CFG[planAction] : null
+  const isGhost    = data.isGhost === true
 
   // Inject CSS once
   useEffect(injectPulseStyles, [])
@@ -193,12 +222,74 @@ export default function BaseAwsNode({ id, data: rawData }: NodeProps<AwsNode>) {
   const statusColor = status === 'configured' ? '#3B82F6' : '#9CA3AF'
   const statusBg    = status === 'configured' ? '#EFF6FF' : '#F3F4F6'
 
+  // Plan diff rows for the tooltip
+  const diffEntries = data.planDiff ? Object.entries(data.planDiff) : []
+
+  // Derive card border / shadow based on plan state
+  const planBorder = planCfg
+    ? `1.5px ${isGhost ? 'dashed' : 'solid'} ${planCfg.color}`
+    : undefined
+  const planShadow = planCfg
+    ? `0 0 0 3px ${planCfg.ring}, 0 2px 8px rgba(0,0,0,0.08)`
+    : undefined
+
   return (
     <div
-      style={{ position: 'relative' }}
+      style={{ position: 'relative', opacity: isGhost ? undefined : 1, animation: isGhost ? 'ghostFloat 2s ease-in-out infinite' : undefined }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
+      {/* ── Plan action badge (top-left corner) ────────────────────────────── */}
+      {planCfg && (
+        <div
+          style={{
+            position:     'absolute',
+            top:          -9,
+            left:         8,
+            zIndex:       10,
+            display:      'flex',
+            alignItems:   'center',
+            gap:          3,
+            background:   planCfg.bg,
+            border:       `1px solid ${planCfg.color}55`,
+            borderRadius: 5,
+            padding:      '1px 6px',
+            fontFamily:   '"DM Sans", sans-serif',
+            pointerEvents:'none',
+          }}
+        >
+          <span style={{ fontSize: 10, fontWeight: 800, color: planCfg.color, lineHeight: 1 }}>
+            {planCfg.symbol}
+          </span>
+          <span style={{ fontSize: 8, fontWeight: 700, color: planCfg.color, letterSpacing: '0.06em' }}>
+            {planCfg.label}
+          </span>
+        </div>
+      )}
+
+      {/* ── Plan address label (below node for ghost nodes) ─────────────────── */}
+      {isGhost && data.planAddress && (
+        <div
+          style={{
+            position:   'absolute',
+            top:        'calc(100% + 4px)',
+            left:       '50%',
+            transform:  'translateX(-50%)',
+            fontSize:   8,
+            fontFamily: '"JetBrains Mono", monospace',
+            color:      planCfg?.color ?? '#9CA3AF',
+            whiteSpace: 'nowrap',
+            pointerEvents: 'none',
+            background: `${planCfg?.bg ?? '#F9FAFB'}`,
+            borderRadius: 3,
+            padding:    '1px 5px',
+            border:     `1px solid ${planCfg?.color ?? '#E5E7EB'}40`,
+          }}
+        >
+          {data.planAddress as string}
+        </div>
+      )}
+
       {/* ── Hover tooltip ──────────────────────────────────────────────────── */}
       <AnimatePresence>
         {hovered && !selected && (
@@ -209,10 +300,10 @@ export default function BaseAwsNode({ id, data: rawData }: NodeProps<AwsNode>) {
             transition={{ duration: 0.12 }}
             style={{
               position:     'absolute',
-              bottom:       'calc(100% + 8px)',
+              bottom:       'calc(100% + 14px)',
               left:         '50%',
               transform:    'translateX(-50%)',
-              width:        210,
+              width:        planMode && diffEntries.length > 0 ? 260 : 210,
               background:   '#1F2937',
               border:       '1px solid #374151',
               borderRadius: 7,
@@ -222,14 +313,42 @@ export default function BaseAwsNode({ id, data: rawData }: NodeProps<AwsNode>) {
               whiteSpace:   'normal',
             }}
           >
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#F9FAFB', fontFamily: '"DM Sans", sans-serif', marginBottom: 4 }}>
+            {/* Service info */}
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#F9FAFB', fontFamily: '"DM Sans", sans-serif', marginBottom: 3 }}>
               {cfg.serviceLabel}
             </div>
-            <div style={{ fontSize: 10, color: '#9CA3AF', fontFamily: '"DM Sans", sans-serif', lineHeight: 1.5, marginBottom: pricingHint ? 5 : 0 }}>
-              {cfg.description}
-            </div>
-            {pricingHint && (
-              <div style={{ fontSize: 10, color: '#F59E0B', fontFamily: '"JetBrains Mono", monospace', fontWeight: 600 }}>
+            {/* Plan address */}
+            {data.planAddress && (
+              <div style={{ fontSize: 9, color: planCfg?.color ?? '#9CA3AF', fontFamily: '"JetBrains Mono", monospace', marginBottom: 5, fontWeight: 600 }}>
+                {data.planAddress as string}
+              </div>
+            )}
+            {/* Regular description (only when not in plan mode) */}
+            {!planMode && (
+              <div style={{ fontSize: 10, color: '#9CA3AF', fontFamily: '"DM Sans", sans-serif', lineHeight: 1.5, marginBottom: pricingHint ? 5 : 0 }}>
+                {cfg.description}
+              </div>
+            )}
+            {/* Plan diff rows */}
+            {planMode && diffEntries.length > 0 && (
+              <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {diffEntries.map(([key, { before, after }]) => (
+                  <div key={key} style={{ display: 'grid', gridTemplateColumns: '90px 1fr 1fr', gap: 4, alignItems: 'center' }}>
+                    <span style={{ fontSize: 9, color: '#6B7280', fontFamily: '"JetBrains Mono", monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {key}
+                    </span>
+                    <span style={{ fontSize: 9, color: '#F87171', fontFamily: '"JetBrains Mono", monospace', textDecoration: before != null ? 'line-through' : 'none', opacity: before != null ? 1 : 0.4 }}>
+                      {before != null ? String(before) : '—'}
+                    </span>
+                    <span style={{ fontSize: 9, color: '#4ADE80', fontFamily: '"JetBrains Mono", monospace' }}>
+                      {after != null ? String(after) : '—'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {pricingHint && !planMode && (
+              <div style={{ fontSize: 10, color: '#F59E0B', fontFamily: '"JetBrains Mono", monospace', fontWeight: 600, marginTop: 4 }}>
                 {pricingHint}
               </div>
             )}
@@ -247,14 +366,16 @@ export default function BaseAwsNode({ id, data: rawData }: NodeProps<AwsNode>) {
 
       {/* ── Node card ──────────────────────────────────────────────────────── */}
       <div
-        onClick={() => selectComponent(id as string)}
+        onClick={() => !isGhost && selectComponent(id as string)}
         style={{
-          background:   selected ? `${cfg.color}08` : '#FFFFFF',
-          border:       selected
+          background:   planCfg
+            ? `${planCfg.bg}`
+            : selected ? `${cfg.color}08` : '#FFFFFF',
+          border:       planBorder ?? (selected
             ? `1.5px solid ${cfg.color}`
             : hovered
             ? '0.5px solid #94a3b8'
-            : '0.5px solid #E5E5E5',
+            : '0.5px solid #E5E5E5'),
           borderRadius: 8,
           padding:      '8px 10px 7px',
           display:      'flex',
@@ -262,14 +383,15 @@ export default function BaseAwsNode({ id, data: rawData }: NodeProps<AwsNode>) {
           gap:          9,
           minWidth:     168,
           maxWidth:     230,
-          cursor:       'pointer',
-          boxShadow:    isNewDrop
-            ? undefined  // controlled by animation
+          cursor:       isGhost ? 'default' : 'pointer',
+          opacity:      isGhost ? 0.75 : 1,
+          boxShadow:    planShadow ?? (isNewDrop
+            ? undefined
             : selected
             ? `0 0 0 3px ${cfg.color}22, 0 2px 6px rgba(0,0,0,0.08)`
             : hovered
             ? '0 2px 8px rgba(0,0,0,0.1)'
-            : '0 1px 4px rgba(0,0,0,0.06)',
+            : '0 1px 4px rgba(0,0,0,0.06)'),
           animation:    isNewDrop ? 'dropPulse 0.4s ease-out' : undefined,
           transition:   'border-color 0.15s, box-shadow 0.15s, background 0.15s',
         }}
@@ -346,23 +468,25 @@ export default function BaseAwsNode({ id, data: rawData }: NodeProps<AwsNode>) {
           </div>
         </div>
 
-        {/* Status pill */}
-        <div
-          style={{
-            fontSize:     8, fontWeight: 700, color: statusColor,
-            background:   statusBg,
-            borderRadius: 4,
-            padding:      '2px 5px',
-            fontFamily:   '"DM Sans", sans-serif',
-            letterSpacing:'0.04em',
-            textTransform:'uppercase',
-            flexShrink:   0,
-            alignSelf:    'flex-start',
-            marginTop:    1,
-          }}
-        >
-          {status}
-        </div>
+        {/* Status pill — hidden in plan mode (badge takes over) */}
+        {!planMode && (
+          <div
+            style={{
+              fontSize:     8, fontWeight: 700, color: statusColor,
+              background:   statusBg,
+              borderRadius: 4,
+              padding:      '2px 5px',
+              fontFamily:   '"DM Sans", sans-serif',
+              letterSpacing:'0.04em',
+              textTransform:'uppercase',
+              flexShrink:   0,
+              alignSelf:    'flex-start',
+              marginTop:    1,
+            }}
+          >
+            {status}
+          </div>
+        )}
 
         {/* ReactFlow handles */}
         <Handle

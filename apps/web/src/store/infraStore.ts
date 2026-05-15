@@ -152,6 +152,15 @@ interface InfraStore {
   components:          InfraComponent[]     // AWS service nodes on the canvas
   edges:               InfraEdge[]          // connections between components
   containers:          InfraContainer[]     // VPC / subnet background overlays
+  /** Terraform plan diff overlay — shows add/change/delete rings on nodes */
+  planMode:            boolean
+  setPlanMode:         (on: boolean) => void
+  /** In-app floating browser */
+  showBrowser:         boolean
+  browserUrl:          string
+  openBrowser:         (url?: string) => void
+  closeBrowser:        () => void
+  setBrowserUrl:       (url: string) => void
   terraform:           TerraformFiles | null// generated HCL (Phase 6)
   selectedComponentId: string | null        // which component has the config panel open
   liveStats:           LiveStats            // live-computed cost + capacity
@@ -211,6 +220,13 @@ export const useInfraStore = create<InfraStore>((set, get) => ({
   isOpen:              false,
   deployNodeId:        null,
   newlyDroppedId:      null,
+  planMode:            false,
+  setPlanMode:         (on) => set({ planMode: on }),
+  showBrowser:         false,
+  browserUrl:          'https://github.com',
+  openBrowser:         (url) => set((s) => ({ showBrowser: true, browserUrl: url ?? s.browserUrl })),
+  closeBrowser:        () => set({ showBrowser: false }),
+  setBrowserUrl:       (url) => set({ browserUrl: url }),
   templateId:          DEFAULT_TEMPLATE,
   scaleTier:           DEFAULT_TIER,
   components:          _initialLayout.components,

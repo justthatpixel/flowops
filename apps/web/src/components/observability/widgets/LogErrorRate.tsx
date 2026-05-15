@@ -45,8 +45,6 @@ export default function LogErrorRate({ id }: { id: string }) {
       title="Log Error Rate"
       icon={AlertTriangle}
       iconColor="#EF4444"
-      width={320}
-      height={200}
     >
       <div style={{ padding: '10px 14px 8px' }}>
         {/* Summary row */}

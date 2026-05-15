@@ -9,7 +9,7 @@
 
 import {
   GitCommit, Hammer, Gauge, AlertTriangle, Shield,
-  TestTube2, BarChart3, Activity, Rocket, Box,
+  TestTube2, BarChart3, Activity, Rocket, Box, Cloud,
   type LucideIcon,
 } from 'lucide-react'
 import type { WidgetType } from '@/store/dashboardStore'
@@ -35,6 +35,7 @@ export const WIDGET_META: Record<WidgetType, WidgetMeta> = {
   prometheus_stat:    { label: 'Prometheus Metrics', description: 'Key metric stat cards',      icon: Activity,     color: '#EF4444' },
   deployment_health:  { label: 'Deployment Health',  description: 'Pod status & resources',     icon: Rocket,       color: '#22C55E' },
   docker_build_status:{ label: 'Docker Builds',      description: 'Image build history',        icon: Box,          color: '#0EA5E9' },
+  terraform_plan:     { label: 'Terraform Plan',     description: 'Before/after resource diff',  icon: Cloud,        color: '#7C3AED' },
 }
 
 const WIDGETS = Object.entries(WIDGET_META) as [WidgetType, WidgetMeta][]

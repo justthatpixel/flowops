@@ -1,9 +1,10 @@
 import { useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { X, FileCode, Sparkles, Download, RefreshCw, Loader2, BarChart2, Layers, GitBranch, Copy, Check } from 'lucide-react'
+import { X, FileCode, Sparkles, Download, RefreshCw, Loader2, BarChart2, Layers, GitBranch, Copy, Check, Globe } from 'lucide-react'
 import { usePipelineStore } from '@/store/pipelineStore'
 import { useDashboardStore } from '@/store/dashboardStore'
 import { useContainerStore } from '@/store/containerStore'
+import { useInfraStore } from '@/store/infraStore'
 import { NODE_CONFIG } from '@/lib/nodeConfig'
 import { useAI } from '@/hooks/useAI'
 import { getPlaceholderFiles } from '@/lib/placeholderFiles'
@@ -17,6 +18,21 @@ import type {
   TestConfig,
   GeneratedFile,
 } from '@/types/pipeline'
+
+function getNodeBrowserUrl(nodeType: string, config: NodeConfig): string {
+  if (nodeType === 'trigger') {
+    const tc = config as TriggerConfig
+    if (tc.provider === 'github') return tc.repo ? `https://github.com/${tc.repo}` : 'https://github.com'
+    if (tc.provider === 'gitlab') return tc.repo ? `https://gitlab.com/${tc.repo}` : 'https://gitlab.com'
+  }
+  if (nodeType === 'docker') return 'https://hub.docker.com'
+  if (nodeType === 'deploy') return 'https://console.aws.amazon.com'
+  if (nodeType === 'security_audit') return 'https://www.sonarqube.org'
+  if (nodeType === 'trivy') return 'https://trivy.dev'
+  if (nodeType === 'prometheus') return 'https://prometheus.io'
+  if (nodeType === 'grafana') return 'https://grafana.com'
+  return 'https://github.com'
+}
 import TriggerConfigForm from './config/TriggerConfigForm'
 import BuildConfigForm from './config/BuildConfigForm'
 import DeployConfigForm from './config/DeployConfigForm'
@@ -29,6 +45,7 @@ export default function NodeConfigPanel() {
   const { nodes, edges, selectedNodeId, selectNode, updateNodeConfig, updateNodeLabel } = usePipelineStore()
   const { openNodeDashboard } = useDashboardStore()
   const openContainerDesigner = useContainerStore((s) => s.openDesigner)
+  const { openBrowser } = useInfraStore()
   const { generateFiles } = useAI()
   const [tab, setTab] = useState<Tab>('config')
   const [editingLabel, setEditingLabel] = useState(false)
@@ -207,6 +224,29 @@ export default function NodeConfigPanel() {
             </button>
           )}
         </div>
+
+        <button
+          onClick={() => openBrowser(getNodeBrowserUrl(nodeType, config))}
+          title="Open in Source Browser"
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: 6,
+            background: 'none',
+            border: '1px solid #C7D2FE',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            color: '#6366F1',
+            transition: 'background 0.15s, border-color 0.15s',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#EEF2FF' }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
+        >
+          <Globe size={13} strokeWidth={2} />
+        </button>
 
         <button
           onClick={() => selectNode(null)}

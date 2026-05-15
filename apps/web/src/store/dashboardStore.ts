@@ -26,6 +26,7 @@ export type WidgetType =
   | 'prometheus_stat'
   | 'deployment_health'
   | 'docker_build_status'
+  | 'terraform_plan'
 
 export interface WidgetInstance {
   id: string

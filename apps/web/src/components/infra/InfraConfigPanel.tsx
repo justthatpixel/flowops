@@ -31,7 +31,7 @@
  */
 
 import { useState, useRef, useCallback } from 'react'
-import { X, ExternalLink, Trash2 } from 'lucide-react'
+import { X, ExternalLink, Trash2, Globe } from 'lucide-react'
 import { useInfraStore } from '@/store/infraStore'
 import { AWS_NODE_CONFIG } from '@/lib/awsNodeConfig'
 import InfraComponentForm from './InfraComponentForm'
@@ -58,7 +58,7 @@ const PRICING_TABLE: Partial<Record<AwsServiceType, { line: string; note: string
 }
 
 export default function InfraConfigPanel() {
-  const { selectedComponentId, components, selectComponent, removeComponent, updateComponentLabel } = useInfraStore()
+  const { selectedComponentId, components, selectComponent, removeComponent, updateComponentLabel, updateComponentConfig, openBrowser } = useInfraStore()
 
   const component = selectedComponentId
     ? components.find((c) => c.id === selectedComponentId)
@@ -94,6 +94,9 @@ export default function InfraConfigPanel() {
 
   const pricing = PRICING_TABLE[component.type as AwsServiceType] ?? []
   const displayLabel = editingLabel !== null ? editingLabel : component.label
+
+  // Source URL stored in component.config.sourceUrl
+  const sourceUrl = (component.config.sourceUrl as string | undefined) ?? ''
 
   return (
     <div
@@ -228,6 +231,57 @@ export default function InfraConfigPanel() {
           >
             {cfg.description}
           </p>
+        </div>
+
+        {/* ── Source URL ─────────────────────────────────────────────────── */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{
+            fontSize: 10, fontWeight: 700, color: '#6B7280',
+            textTransform: 'uppercase', letterSpacing: '0.06em',
+            fontFamily: '"DM Sans", sans-serif', marginBottom: 6,
+          }}>
+            Source URL
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <div style={{
+              flex: 1, display: 'flex', alignItems: 'center', gap: 6,
+              background: '#F9FAFB', border: '1px solid #E5E7EB',
+              borderRadius: 7, padding: '0 10px', height: 32,
+              transition: 'border-color 0.15s',
+            }}
+              onFocusCapture={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#3B82F6' }}
+              onBlurCapture={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#E5E7EB' }}
+            >
+              <Globe size={11} color="#9CA3AF" strokeWidth={2} style={{ flexShrink: 0 }} />
+              <input
+                value={sourceUrl}
+                onChange={(e) => updateComponentConfig(component.id, { sourceUrl: e.target.value })}
+                placeholder="https://github.com/org/repo"
+                style={{
+                  flex: 1, border: 'none', outline: 'none', background: 'transparent',
+                  fontSize: 11, color: '#374151', fontFamily: '"DM Sans", sans-serif',
+                }}
+              />
+            </div>
+            {sourceUrl && (
+              <button
+                onClick={() => openBrowser(sourceUrl)}
+                title="Open in Source Browser"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  padding: '0 10px', height: 32, borderRadius: 7, flexShrink: 0,
+                  background: 'linear-gradient(135deg, #0EA5E9, #6366F1)',
+                  border: 'none', cursor: 'pointer',
+                  fontSize: 11, fontWeight: 600, color: '#fff',
+                  fontFamily: '"DM Sans", sans-serif',
+                  boxShadow: '0 1px 4px rgba(99,102,241,0.35)',
+                }}
+              >
+                <Globe size={11} strokeWidth={2} />
+                View
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Pricing */}

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import {
   ReactFlow,
   Background,
@@ -20,68 +20,32 @@ import { NODE_CONFIG } from '@/lib/nodeConfig'
 const nodeTypes = { pipelineNode: BaseNode, pipelineGroupBox: GroupBoxNode }
 const edgeTypes = { animatedEdge: AnimatedEdge }
 
-// ─── Group box computation ─────────────────────────────────────────────────
-// Derived from groupConfigs — never stored in the pipeline store itself.
+const FALLBACK_W = 185
+const FALLBACK_H = 100
 
-const PAD        = 24   // padding around member nodes (flow-space px)
-const FALLBACK_W = 185  // BaseNode width
-const FALLBACK_H = 100  // BaseNode approximate height
-
-function computeGroupBoxes(
-  nodes: Node<PipelineNodeData>[],
-  groupConfigs: Record<string, GroupConfig>,
-): Node[] {
-  return Object.entries(groupConfigs).flatMap(([id, config]) => {
-    const members = nodes.filter((n) => config.memberIds.includes(n.id))
-    if (members.length === 0) {
-      // Empty group — render a fixed-size placeholder so it's visible on the canvas
-      return [{
-        id,
-        type:        'pipelineGroupBox',
-        position:    { x: 0, y: 0 },
-        data:        { label: config.label, color: config.color },
-        style:       { width: 220, height: 110 },
-        draggable:   false,
-        selectable:  false,
-        connectable: false,
-        focusable:   false,
-        deletable:   false,
-        zIndex:      -1,
-      } as Node]
-    }
-
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
-    for (const node of members) {
-      const w = node.measured?.width  ?? FALLBACK_W
-      const h = node.measured?.height ?? FALLBACK_H
-      minX = Math.min(minX, node.position.x)
-      minY = Math.min(minY, node.position.y)
-      maxX = Math.max(maxX, node.position.x + w)
-      maxY = Math.max(maxY, node.position.y + h)
-    }
-
-    return [{
-      id,
-      type:        'pipelineGroupBox',
-      position:    { x: minX - PAD, y: minY - PAD },
-      data:        { label: config.label, color: config.color },
-      style:       { width: maxX - minX + PAD * 2, height: maxY - minY + PAD * 2 },
-      draggable:   false,
-      selectable:  false,
-      connectable: false,
-      focusable:   false,
-      deletable:   false,
-      zIndex:      -1,
-    } as Node]
-  })
+// ─── Group boxes from stored position/size ────────────────────────────────────
+function computeGroupBoxes(groupConfigs: Record<string, GroupConfig>): Node[] {
+  return Object.entries(groupConfigs).map(([id, config]) => ({
+    id,
+    type:        'pipelineGroupBox',
+    position:    config.position ?? { x: 100, y: 100 },
+    data:        { label: config.label, color: config.color },
+    style:       {
+      width:  config.size?.width  ?? 320,
+      height: config.size?.height ?? 200,
+    },
+    draggable:   true,
+    selectable:  true,
+    connectable: false,
+    focusable:   false,
+    deletable:   false,
+    zIndex:      -1,
+  } as Node))
 }
 
-// ─── Drop-zone detection ───────────────────────────────────────────────────
-const DROP_BUFFER = 48
-
+// ─── Drop-zone detection using stored group bounds ────────────────────────────
 function detectGroupDrop(
   draggedNode: Node<PipelineNodeData>,
-  allNodes: Node<PipelineNodeData>[],
   groupConfigs: Record<string, GroupConfig>,
 ): string | null {
   const dW = draggedNode.measured?.width  ?? FALLBACK_W
@@ -90,25 +54,10 @@ function detectGroupDrop(
   const cy  = draggedNode.position.y + dH / 2
 
   for (const [groupId, config] of Object.entries(groupConfigs)) {
-    const others = allNodes.filter(
-      (n) => config.memberIds.includes(n.id) && n.id !== draggedNode.id,
-    )
-    if (others.length === 0) continue
-
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
-    for (const m of others) {
-      const mW = m.measured?.width  ?? FALLBACK_W
-      const mH = m.measured?.height ?? FALLBACK_H
-      minX = Math.min(minX, m.position.x - PAD)
-      minY = Math.min(minY, m.position.y - PAD)
-      maxX = Math.max(maxX, m.position.x + mW + PAD)
-      maxY = Math.max(maxY, m.position.y + mH + PAD)
-    }
-
-    if (
-      cx >= minX - DROP_BUFFER && cx <= maxX + DROP_BUFFER &&
-      cy >= minY - DROP_BUFFER && cy <= maxY + DROP_BUFFER
-    ) {
+    const { x, y } = config.position ?? { x: 0, y: 0 }
+    const w = config.size?.width  ?? 320
+    const h = config.size?.height ?? 200
+    if (cx >= x && cx <= x + w && cy >= y && cy <= y + h) {
       return groupId
     }
   }
@@ -123,23 +72,24 @@ export default function PipelineCanvas() {
     onNodesChange, onEdgesChange,
     setNodes, selectNode, selectGroup,
     groupConfigs, setGroupMember, addGroup,
+    updateGroupPosition,
   } = usePipelineStore()
 
-  const wrapperRef = useRef<HTMLDivElement>(null)
   const { screenToFlowPosition } = useReactFlow()
 
   const groupIds = useMemo(() => new Set(Object.keys(groupConfigs)), [groupConfigs])
 
   const groupBoxNodes = useMemo(
-    () => computeGroupBoxes(nodes, groupConfigs),
-    [nodes, groupConfigs],
+    () => computeGroupBoxes(groupConfigs),
+    [groupConfigs],
   )
+
   const allNodes = useMemo(
     () => [...groupBoxNodes, ...nodes],
     [groupBoxNodes, nodes],
   )
 
-  // Filter change events for group boxes — they must never reach the store
+  // Pass pipeline-node changes to store; group position changes handled via onNodeDragStop
   const handleNodesChange = useCallback<OnNodesChange<Node>>(
     (changes) => {
       const pipelineChanges = (changes as NodeChange<Node<PipelineNodeData>>[]).filter((c) => {
@@ -151,17 +101,19 @@ export default function PipelineCanvas() {
     [onNodesChange, groupIds],
   )
 
-  // ── Drag-drop group membership ────────────────────────────────────────────
+  // ── Drag stop: persist group position or update pipeline node membership ──
   const onNodeDragStop = useCallback(
     (_: React.MouseEvent, draggedNode: Node) => {
-      if (groupIds.has(draggedNode.id)) return
+      if (groupIds.has(draggedNode.id)) {
+        updateGroupPosition(draggedNode.id, draggedNode.position.x, draggedNode.position.y)
+        return
+      }
 
+      // Regular node — update group membership based on where it landed
       const newGroupId = detectGroupDrop(
         draggedNode as Node<PipelineNodeData>,
-        nodes,
         groupConfigs,
       )
-
       for (const groupId of Object.keys(groupConfigs)) {
         const isCurrentMember = groupConfigs[groupId].memberIds.includes(draggedNode.id)
         const shouldBeMember  = newGroupId === groupId
@@ -170,7 +122,7 @@ export default function PipelineCanvas() {
         }
       }
     },
-    [nodes, groupConfigs, groupIds, setGroupMember],
+    [groupConfigs, groupIds, setGroupMember, updateGroupPosition],
   )
 
   // ── Canvas drop ───────────────────────────────────────────────────────────
@@ -183,22 +135,19 @@ export default function PipelineCanvas() {
     (e: React.DragEvent) => {
       e.preventDefault()
 
-      // ── Group drop ────────────────────────────────────────────────
       const groupRaw = e.dataTransfer.getData('application/reactflow-group')
       if (groupRaw) {
         const { label } = JSON.parse(groupRaw) as { label: string }
-        const id = `g-${crypto.randomUUID().slice(0, 8)}`
-        addGroup(id, label, 'slate')
+        const id       = `g-${crypto.randomUUID().slice(0, 8)}`
+        const position = screenToFlowPosition({ x: e.clientX, y: e.clientY })
+        addGroup(id, label, 'slate', position)
         return
       }
 
-      // ── Node drop ─────────────────────────────────────────────────
       const raw = e.dataTransfer.getData('application/reactflow')
       if (!raw) return
-
       const { nodeType, label } = JSON.parse(raw) as { nodeType: NodeType; label: string }
       const position = screenToFlowPosition({ x: e.clientX, y: e.clientY })
-
       const newNode: Node<PipelineNodeData> = {
         id: crypto.randomUUID(),
         type: 'pipelineNode',
@@ -214,7 +163,7 @@ export default function PipelineCanvas() {
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       if (groupIds.has(node.id)) {
-        selectGroup(node.id)   // open group config panel
+        selectGroup(node.id)
       } else {
         selectNode(node.id)
       }
@@ -228,7 +177,7 @@ export default function PipelineCanvas() {
   }, [selectNode, selectGroup])
 
   return (
-    <div ref={wrapperRef} style={{ flex: 1, height: '100%', background: '#F7F7F5' }}>
+    <div style={{ flex: 1, height: '100%', background: '#F7F7F5' }}>
       <ReactFlow
         nodes={allNodes}
         edges={edges}

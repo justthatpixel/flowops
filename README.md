@@ -1,11 +1,6 @@
 
 
 
-
-
-
-
-
 <div align="center">
 
 <img src="./docs/banner.png" alt="FlowOps" width="100%" />
@@ -51,6 +46,7 @@ Describe your app to the AI and it configures the entire pipeline for you. Switc
 Describe your stack in plain English — Claude configures a complete, production-grade CI/CD pipeline for you instantly. Every node is fully customisable after generation.
 
 <img src="./docs/gifs/ai-pipeline-configurator.gif" alt="AI Pipeline Configurator" width="100%" />
+<img width="1840" height="1074" alt="Screenshot 2026-05-15 at 20 48 39" src="https://github.com/user-attachments/assets/de6e933b-2ad6-452b-b632-7427664e6cac" />
 
 
 ---
@@ -66,6 +62,14 @@ Drag-and-drop CI/CD pipeline canvas with animated edges, group boxes, and a full
 Design your AWS architecture on a visual canvas. Supports 30+ AWS services across Compute, Networking, Database, Storage, Security, and Messaging. Drag from the sidebar, connect services, and configure each resource inline.
 
 <img src="./docs/gifs/infra-designer.gif" alt="Infrastructure Designer" width="100%" />
+![Uploading Screenshot 2026-05-15 at 20.53.42.png…]()
+
+<img width="1867" height="1107" alt="Screenshot 2026-05-15 at 20 52 22" src="https://github.com/user-attachments/assets/50c090b5-1637-49ce-99fd-b4c16f689283" />
+
+
+
+
+
 
 ---
 
@@ -73,6 +77,7 @@ Design your AWS architecture on a visual canvas. Supports 30+ AWS services acros
 See estimated monthly cost update in real time as you add resources. Switch between scale tiers (10 / 1k / 10k / 100k / 1M users) to understand how your costs change with growth.
 
 <img src="./docs/gifs/cost-estimation.gif" alt="Cost Estimation & Scale Tiers" width="100%" />
+<img width="1853" height="1086" alt="Screenshot 2026-05-15 at 20 51 15" src="https://github.com/user-attachments/assets/083f7d3e-28c0-4653-90f6-0a3447ec3915" />
 
 ---
 

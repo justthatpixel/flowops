@@ -2,7 +2,8 @@
 # FlowOps
 
 <div align="center">
-<img width="100%" alt="flowops-banner" src="https://github.com/user-attachments/assets/7e779480-315e-4d47-837f-61432978a45b" />
+<img width="100%" alt="flowops-banner" src="https://github.com/user-attachments/assets/cc89d8d1-1ced-4946-b70a-54e612e2e8be" />
+
 
 <br />
 <br />

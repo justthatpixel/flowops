@@ -1,3 +1,11 @@
+
+
+
+
+
+
+
+
 <div align="center">
 
 <img src="./docs/banner.png" alt="FlowOps" width="100%" />
@@ -44,13 +52,14 @@ Describe your stack in plain English — Claude configures a complete, productio
 
 <img src="./docs/gifs/ai-pipeline-configurator.gif" alt="AI Pipeline Configurator" width="100%" />
 
+
 ---
 
 ### 🔀 Visual Pipeline Builder
 Drag-and-drop CI/CD pipeline canvas with animated edges, group boxes, and a full library of node types: Trigger, Build, Test, Docker, Deploy, Security Audit, Observability, and more.
 
 <img src="./docs/gifs/pipeline-builder.gif" alt="Pipeline Builder" width="100%" />
-
+<img width="1440" height="841" alt="Templates" src="https://github.com/user-attachments/assets/dcd81e64-7294-4dc4-ba67-2ede6e69ae0c" />
 ---
 
 ### 🏗️ Infrastructure Designer
@@ -71,6 +80,7 @@ See estimated monthly cost update in real time as you add resources. Switch betw
 Generate production-ready Terraform from your architecture with one click. Switch to Plan View to see a visual diff of what will be **created**, **updated**, **replaced**, or **destroyed** — colour-coded directly on the canvas.
 
 <img src="./docs/gifs/terraform-plan.gif" alt="Terraform Generation & Plan View" width="100%" />
+<img width="1440" height="841" alt="Guardrails" src="https://github.com/user-attachments/assets/8c6b2275-1063-4803-a7b6-63e6bec3d215" />
 
 ---
 
@@ -78,6 +88,7 @@ Generate production-ready Terraform from your architecture with one click. Switc
 Build a custom monitoring dashboard by dragging widgets into a grid layout. Includes Commit Feed, CI Status, Core Web Vitals, Log Error Rate, Trivy Scan, Grafana Chart, Prometheus Metrics, Deployment Health, Docker Builds, and Terraform Plan diffs.
 
 <img src="./docs/gifs/dashboard.gif" alt="Observability Dashboard" width="100%" />
+<img width="1440" height="841" alt="Dashboard" src="https://github.com/user-attachments/assets/e071c521-fad6-4ebb-a8d8-95ccfc5a7299" />
 
 ---
 
@@ -85,6 +96,7 @@ Build a custom monitoring dashboard by dragging widgets into a grid layout. Incl
 Open GitHub, GitLab, Grafana, Prometheus, Datadog, ArgoCD, Jenkins, or any custom URL in a full-screen in-app browser panel — no tab switching required. Each pipeline node links directly to its relevant source.
 
 <img src="./docs/gifs/source-browser.gif" alt="Source Browser" width="100%" />
+<img width="1080" height="630" alt="iframe-shortened" src="https://github.com/user-attachments/assets/97ccf51f-03b2-4b10-9063-777a19aed921" />
 
 ---
 
@@ -92,7 +104,7 @@ Open GitHub, GitLab, Grafana, Prometheus, Datadog, ArgoCD, Jenkins, or any custo
 Enforce OPA (Open Policy Agent) Rego policies across your pipeline and infrastructure. Guardrails check cost caps, naming conventions, connection rules, and SCP compliance — with a live audit log.
 
 <img src="./docs/gifs/guardrails.gif" alt="Policy Guardrails" width="100%" />
-
+<img width="1440" height="841" alt="Infastructure-fixed" src="https://github.com/user-attachments/assets/d238a759-5879-44a9-a374-b133674e67e9" />
 ---
 
 ## Getting Started
